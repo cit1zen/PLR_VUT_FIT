@@ -27,7 +27,8 @@ int main(int argc, char * argv[])
     }
     if (binary_tree.size() == 1)
     {
-        cout << binary_tree << endl;
+        if (myid == 0)
+            cout << binary_tree << endl;
         MPI_Finalize();
         return 0;
     }
@@ -94,45 +95,96 @@ int main(int argc, char * argv[])
                   etour, 1, MPI_INT,
                   MPI_COMM_WORLD);
 
+    // Opak k Etour
+    // Na vypocet predkov v eulerovej ceste
+    int reverse_etour [numprocs];
+    MPI_Send(&myid, 1, MPI_INT, etour_part, 0, MPI_COMM_WORLD);
+    MPI_Recv(&reverse_etour[myid], 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+    MPI_Allgather(&reverse_etour[myid], 1, MPI_INT,
+                  reverse_etour, 1, MPI_INT,
+                  MPI_COMM_WORLD);
+
     // Preorder algoritmus
     // Pociatocna vahu
     // Je to dopredna hrana
-    unsigned weight = (myid%2 == 0) ? 1 : 0;
-    unsigned succ = etour[myid];
-    unsigned buffer[2];
-    for (unsigned i=0; i < log10(numprocs); i++)
+    int weight = (myid%2 == 0) ? 1 : 0;
+    int succ = (etour[myid] == 0) ? -1 : etour[myid];
+    int pred = (myid == 0) ? -1 : reverse_etour[myid];
+    int requester = 0;
+    int buffer[2];
+    MPI_Barrier(MPI_COMM_WORLD);
+    for (unsigned i=0; i < log2(numprocs); i++)
     {
-        for(unsigned y=0;x<adjacency_list[x].size();y++)
+        // Ak -1, som na konci
+        if (succ != -1)
+        {
+            buffer[0] = myid;
+            buffer[1] = pred;
+            MPI_Send(&buffer, 2, MPI_INT, succ, 0, MPI_COMM_WORLD);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
 
+        // Ak -1; uz sa ma nikto nic nebude pytat
+        if (pred != -1)
+        {
+            MPI_Recv(&buffer, 2, MPI_INT, pred, 0, MPI_COMM_WORLD, &stat);
+            requester = buffer[0];
+            pred = buffer[1];
+
+            // Sformulujem odpoved na request
+            buffer[0] = weight;
+            buffer[1] = succ;
+            MPI_Send(&buffer, 2, MPI_INT, requester, 0, MPI_COMM_WORLD);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        // Ak -1, som na konci
+        if (succ != -1)
+        {
+            MPI_Recv(&buffer, 2, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &stat);
+            weight += buffer[0];
+            succ = buffer[1];
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
     }
-    cout << "MYID " << myid << " SCORE " << weight << endl;
 
-    MPI_Send(data, count, datatype, i, 0, communicator);
+    // Korekcia
+    // Dopredna hrana
+    if (myid%2 == 0)
+    {
+        weight = binary_tree.size() - weight;
+    }
 
-    // if (myid == 0)
-    // {
-    //     for(unsigned x=0;x<adjacency_list.size();x++)
-    //     {
-    //         for(unsigned y=0;x<adjacency_list[x].size();y++)
-    //         {
-    //             cout << adjacency_list[x][y];
-    //         }
-    //         cout << endl;
-    //     }
-    //     // cout << argv[1] << endl;
-    // }
+    // Zgrupenie vysledkov
+    MPI_Barrier(MPI_COMM_WORLD);
+    char preorder[numprocs];
+    preorder[0] = binary_tree[0];
+    if (myid%2 == 0)
+    {
+        MPI_Send(&to, 1, MPI_INT, weight, 0, MPI_COMM_WORLD);
+    }
+    if (myid < binary_tree.size() && myid != 0)
+    {
+        int buffer = 0;
+        MPI_Recv(&buffer, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD,
+                 MPI_STATUS_IGNORE);
+        preorder[myid] = binary_tree[buffer];
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Gather(&preorder[myid], 1, MPI_CHAR,
+               preorder, 1, MPI_CHAR,
+               0, MPI_COMM_WORLD);
 
-    // cout << "MYID " << myid << " FROM " << binary_tree[from] << " TO " << binary_tree[to] << " ETOUR " << etour_part << endl;
-    // if (myid == 0)
-    // {
-    //     // cout << reverse << endl;
-    //     // cout << "MYID " << myid << " FROM " << binary_tree[from] << " TO " << binary_tree[to] << " ETOUR " << etour_part << endl;
-    //     // for(int i=0;i<numprocs;i++)
-    //     //     cout << etour[i] << endl;
-    // }
+
+    // Vypis
+    if (myid == 0)
+    {
+        for(int i=0;i<binary_tree.size();i++)
+            cout << preorder[i] << endl;
+    }
 
 
     MPI_Finalize();
-
     return 0;
 }
