@@ -181,7 +181,8 @@ int main(int argc, char * argv[])
     if (myid == 0)
     {
         for(int i=0;i<binary_tree.size();i++)
-            cout << preorder[i] << endl;
+            cout << preorder[i];
+         cout << endl;
     }
 
 
