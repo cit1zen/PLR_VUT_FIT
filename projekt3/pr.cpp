@@ -19,6 +19,10 @@ int main(int argc, char * argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);       // zjistíme, kolik procesů běží 
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);           // zjistíme id svého procesu 
 
+    double start, end;
+    MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
+    start = MPI_Wtime();
+
     // Argument parsing
     if (argc != 2)
     {
@@ -157,7 +161,6 @@ int main(int argc, char * argv[])
     }
 
     // Zgrupenie vysledkov
-    MPI_Barrier(MPI_COMM_WORLD);
     char preorder[numprocs];
     preorder[0] = binary_tree[0];
     if (myid%2 == 0)
@@ -176,6 +179,8 @@ int main(int argc, char * argv[])
                preorder, 1, MPI_CHAR,
                0, MPI_COMM_WORLD);
 
+    MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
+    end = MPI_Wtime();
 
     // Vypis
     if (myid == 0)
@@ -185,6 +190,12 @@ int main(int argc, char * argv[])
          cout << endl;
     }
 
+    // Vrati kolko trvalo zoradenie
+    if (myid == 0) 
+    {
+        cerr << numprocs << endl << 
+                endl << end-start << endl;
+    }
 
     MPI_Finalize();
     return 0;
