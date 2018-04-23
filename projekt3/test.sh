@@ -11,7 +11,7 @@ binary_tree=$1;
 proc_count=$(expr ${#binary_tree} \* 2 - 2)
 
 # Preklad cpp zdrojaku
-mpic++ --prefix /usr/local/share/OpenMPI -o preorder pr.cpp
+mpic++ --prefix /usr/local/share/OpenMPI -o preorder pro.cpp
 
 # Spusteni
 mpirun --oversubscribe --prefix /usr/local/share/OpenMPI \

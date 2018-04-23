@@ -191,11 +191,11 @@ int main(int argc, char * argv[])
     }
 
     // Vrati kolko trvalo zoradenie
-    if (myid == 0) 
-    {
-        cerr << numprocs << endl << 
-                endl << end-start << endl;
-    }
+    // if (myid == 0) 
+    // {
+    //     cerr << numprocs << endl << 
+    //             endl << end-start << endl;
+    // }
 
     MPI_Finalize();
     return 0;
