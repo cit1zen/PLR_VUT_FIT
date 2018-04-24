@@ -8,7 +8,7 @@ Obecný výpočet v strome má nasledujúce kroky:
 3. Spočítanie sumi suffixov nad týmto poľom.
 4. Korekcia.
 
-Vytvorenie eulerovej cesty je podrobne vysvetlené [tu](http://example.org). Eulerova cesta je cesta ako navštíviť všetky uzly grafu tak, aby sme po každej hrane prešli len raz.    
+Vytvorenie eulerovej cesty je podrobne vysvetlené [tu](https://www.fit.vutbr.cz/study/courses/PDA/private/www/h007.pdf#page=25). Eulerova cesta je cesta ako navštíviť všetky uzly grafu tak, aby sme po každej hrane prešli len raz.    
 
 Vytvorenie poľa hodnôt je jednoduché. Dopredné hrany majú hodnotu 1 a ostatné 0. 
 
@@ -35,13 +35,13 @@ C++ časť programu začína načítaným vstupu. Ak je dĺžka vstupu menšia a
 
 Každý procesor v tomto programe reprezentuje 1 hranu v grafe, preto je dôležité vedieť odkiaľ a kam daná hrana ukazuje. To sa zisťuje pomocou rovníc `myid/4` a `myid/2 + 1` pre kam a odkiaľ smeruje daná hrana. Ak má procesor nepárne ID, tak to znamená že to nie je dopredná hrana, čo spôsobí že sa vymenia miesta kam a odkiaľ hrana ide.
 
-Následne sa započne hľadanie [eulerovej cesty](http://example.org). Prvou fázou je vytvorenie tkz. `adjecancy listu`. Každý procesor si v záujme optimalizácie vytvorí len tú časť `adjecancy listu`, ktorú bude potrebovať pre nájdenie eulerovej cesty.
+Následne sa započne hľadanie [eulerovej cesty](https://www.fit.vutbr.cz/study/courses/PDA/private/www/h007.pdf#page=25). Prvou fázou je vytvorenie tkz. `adjecancy listu`. Každý procesor si v záujme optimalizácie vytvorí len tú časť `adjecancy listu`, ktorú bude potrebovať pre nájdenie eulerovej cesty.
 
-Potom vytvorení `adjecancy listu` nasleduje fáza hľadania následníka, ktorého algoritmus je zachytený [tu](http://example.org). Potom máme problém, že každý procesor má len svoju časť eulerovej cesty. To vyriešime pomocou funkcie `MPI_Allgather`, ktorá spôsobí, že každý procesor bude mať celú eulerovu cestu.
+Potom vytvorení `adjecancy listu` nasleduje fáza hľadania následníka, ktorého algoritmus je zachytený [tu](https://www.fit.vutbr.cz/study/courses/PDA/private/www/h007.pdf#page=24). Potom máme problém, že každý procesor má len svoju časť eulerovej cesty. To vyriešime pomocou funkcie `MPI_Allgather`, ktorá spôsobí, že každý procesor bude mať celú eulerovu cestu.
 
 Ďalej vypočítame opačnú eulerovu cestu. To je potrebné pre sumu suffixov, keďže potrebujeme vedieť koľko krát bude niekto od daného procesoru niečo žiadať. Tá sa vypočíta tak, že každý procesor pošle svojmu následníkovi v eulerovej ceste svoje ID a potom si pomocou `MPI_Allgather` pošlú svoje časti opačnej eulerovej cesty.
 
-Po týchto krokoch začne hľadanie poradia preorder vrcholov. Obecný postup je vysvetlený [tu](https://www.fit.vutbr.cz/study/courses/PDA/private/www/h007.pdf#page=30) a [tu](http://example.org). Pri implementácií je zaujímavý spôsob akým medzi sebou komunikujú jednotlivé procesory. Každý procesor, ak už nie je na konci eulerovej cesty, najprv pošle požiadavku procesoru od ktorého chce jeho `weight` a ID jeho následníka. V tejto požiadavke je jeho ID a ID jeho predchandu v eulerovej ceste. Potom, ak ešte existuje niekto, kto by chcel od neho informácie, sa uspí a čaká kto s ním naviaže spojenie. Tomu pošle svoju `weight` a ID následníka. Toto trvá až kým procesor z ID 0 neprejde až na koniec eulerovej cesty.
+Po týchto krokoch začne hľadanie poradia preorder vrcholov. Obecný postup je vysvetlený [tu](https://www.fit.vutbr.cz/study/courses/PDA/private/www/h007.pdf#page=30). Pri implementácií je zaujímavý spôsob akým medzi sebou komunikujú jednotlivé procesory. Každý procesor, ak už nie je na konci eulerovej cesty, najprv pošle požiadavku procesoru od ktorého chce jeho `weight` a ID jeho následníka. V tejto požiadavke je jeho ID a ID jeho predchandu v eulerovej ceste. Potom, ak ešte existuje niekto, kto by chcel od neho informácie, sa uspí a čaká kto s ním naviaže spojenie. Tomu pošle svoju `weight` a ID následníka. Toto trvá až kým procesor z ID 0 neprejde až na koniec eulerovej cesty.
 
 Následne je urobená korekcia. Po nej procesory reprezentujúce dopredné hrany pošlú vrchol kam vedú procesu z ID mieste v preorder ceste kam daný vrchol patrí. Následne procesor z ID 0 zozberá celú preorder cestu pomocou `MPI_Gather` a vypíše ju na `stdout`.
 
